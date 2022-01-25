@@ -11,6 +11,20 @@ var builder = WebApplication.CreateBuilder(args);
 // Setup JWT configuration
 builder.Services.Configure<JwtConfig>(builder.Configuration.GetSection("JwtConfig"));
 
+var key = Encoding.ASCII.GetBytes(builder.Configuration["JwtConfig:Secret"]);
+
+var tokenValidationParams = new TokenValidationParameters
+{
+    ValidateIssuerSigningKey = true, // validate the third part of JWT token agains secret
+    IssuerSigningKey = new SymmetricSecurityKey(key), // used to encrypt tokens
+    ValidateIssuer = false, //ToDo: change this
+    ValidateAudience = false, //ToDo: change this
+    ValidateLifetime = true,
+    RequireExpirationTime = false //ToDo: change this
+};
+
+builder.Services.AddSingleton(tokenValidationParams);
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -19,18 +33,8 @@ builder.Services.AddAuthentication(options =>
 })
     .AddJwtBearer(jwt =>
     {
-        var key = Encoding.ASCII.GetBytes(builder.Configuration["JwtConfig:Secret"]);
-
         jwt.SaveToken = true;
-        jwt.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true, // validate the third part of JWT token agains secret
-            IssuerSigningKey = new SymmetricSecurityKey(key), // used to encrypt tokens
-            ValidateIssuer = false, //ToDo: change this
-            ValidateAudience = false, //ToDo: change this
-            ValidateLifetime = true, 
-            RequireExpirationTime = false //ToDo: change this
-        };
+        jwt.TokenValidationParameters = tokenValidationParams;
     });
 
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)

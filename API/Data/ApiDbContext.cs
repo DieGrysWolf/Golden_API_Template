@@ -5,11 +5,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using API.Entities.Models.DTOs;
 
 namespace API.Data
-{
+{ 
     public class ApiDbContext : IdentityDbContext
     {
+        public virtual DbSet<RefreshToken>? RefreshTokens { get; set; }
+
         public ApiDbContext(DbContextOptions<ApiDbContext> options)
             : base(options)
         {

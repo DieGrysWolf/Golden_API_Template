@@ -1,5 +1,7 @@
+global using API.DataServer;
+global using API.DataServer.Data;
+global using API.DataServer.IConfiguration;
 using API.Configuration;
-using API.DataServer;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -46,6 +48,7 @@ var serverVersion = new MySqlServerVersion(new Version(8, 0, 27));
 builder.Services.AddDbContext<ApiDbContext>(options => options.UseMySql(connectionString, serverVersion));
 
 // Add services to the container.
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

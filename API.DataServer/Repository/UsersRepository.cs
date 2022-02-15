@@ -39,8 +39,8 @@ namespace API.DataServer.Repository
         {
             try
             {
-                var user = dbSet.Where(x => x.EmailAddress == email)
-                    .FirstOrDefault();
+                var user = await dbSet.Where(x => x.EmailAddress == email)
+                    .FirstOrDefaultAsync();
 
                 if (user == null)
                     return new UserModel();
@@ -51,6 +51,52 @@ namespace API.DataServer.Repository
             {
                 _logger.LogError(ex, "{Repo} GetuserByEmail has generated an error", typeof(UsersRepository));
                 return new UserModel();
+            }
+        }
+
+        public async Task<UserModel> GetByIdentityIdAsync(Guid identityId)
+        {
+            try
+            {
+                var result = await dbSet.Where(x => x.Alive == true && x.IdentityId == identityId)
+                    .FirstOrDefaultAsync();
+
+                if (result == null)
+                    return new UserModel();
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "{Repo} GetByIdentityId method has generated an error", typeof(UsersRepository));
+                return new UserModel();
+            }
+        }
+
+        public async Task<bool> UpdateUserProfileAsync(UserModel user)
+        {
+            try
+            {
+                var existingUser = await dbSet.Where(x => x.Alive == true && x.IdentityId == user.IdentityId)
+                    .FirstOrDefaultAsync();
+
+                if (existingUser == null)
+                    return false;
+
+                existingUser.FirstName = user.FirstName;
+                existingUser.LastName = user.LastName;
+                existingUser.PhoneNumber = user.PhoneNumber;
+                existingUser.Address = user.Address;
+                existingUser.DateUpdated = DateTime.UtcNow;
+
+                dbSet.Update(existingUser);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "{Repo} UpdateUserProfile method has generated an error", typeof(UsersRepository));
+                return false;
             }
         }
     }

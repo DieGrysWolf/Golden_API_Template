@@ -17,12 +17,11 @@ using System.Text;
 
 namespace API.Controllers.v1
 {
-    [Route("api/v{version:apiVersion}[controller]")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
     [ApiVersion("1.0")]
     public class AuthController : BaseController
     {
-        private readonly UserManager<IdentityUser> _userManager;
         private readonly JwtConfig _jwtConfig;
         private readonly TokenValidationParameters _tokenValidationParams;
 
@@ -30,7 +29,7 @@ namespace API.Controllers.v1
             UserManager<IdentityUser> userManager,
             IOptionsMonitor<JwtConfig> optionsMonitor,
             TokenValidationParameters TokenValidationParams,
-            IUnitOfWork unitOfWork) : base(unitOfWork)
+            IUnitOfWork unitOfWork) : base(unitOfWork, userManager)
         {
             _userManager = userManager;
             _jwtConfig = optionsMonitor.CurrentValue;

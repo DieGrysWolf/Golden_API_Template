@@ -10,5 +10,7 @@ namespace API.DataServer.IRepository
     public interface IUsersRepository : IGenericRepository<UserModel>
     {
         Task<UserModel> GetUserByEmail(string email);
+        Task<UserModel> GetByIdentityIdAsync(Guid identityId);
+        Task<bool> UpdateUserProfileAsync(UserModel user);
     }
 }

@@ -9,7 +9,7 @@ namespace API.DataServer.Data
     public class UserModel
     {
         public Guid Id { get; set; } = Guid.NewGuid();
-        public string? IdentityId { get; set; }
+        public Guid IdentityId { get; set; }
         public bool Alive { get; set; } = true; // this is to shadow delete
         public DateTime DateJoined { get; set; } = DateTime.Now;
         public DateTime DateUpdated { get; set; }

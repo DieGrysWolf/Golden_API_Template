@@ -41,7 +41,7 @@ namespace API.DataServer.Repository
         }
 
         // This will be unique to every repository
-        public async Task<bool> UpdateAsync(T entity)
+        public Task<bool> UpdateAsync(T entity)
         {
             throw new NotImplementedException();
         }

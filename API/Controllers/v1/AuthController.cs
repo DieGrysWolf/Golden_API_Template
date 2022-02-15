@@ -1,6 +1,7 @@
 ﻿using API.Configuration;
 using API.DataServer;
 using API.Entities.Models.DTOs;
+using API.Entities.Models.DTOs.Generic;
 using API.Entities.Models.DTOs.Requests;
 using API.Entities.Models.DTOs.Responses;
 using Microsoft.AspNetCore.Http;
@@ -19,23 +20,21 @@ namespace API.Controllers.v1
     [Route("api/v{version:apiVersion}[controller]")]
     [ApiController]
     [ApiVersion("1.0")]
-    public class AuthController : ControllerBase
+    public class AuthController : BaseController
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly JwtConfig _jwtConfig;
         private readonly TokenValidationParameters _tokenValidationParams;
-        private readonly ApiDbContext _apiDbContext;
 
         public AuthController(
             UserManager<IdentityUser> userManager,
             IOptionsMonitor<JwtConfig> optionsMonitor,
             TokenValidationParameters TokenValidationParams,
-            ApiDbContext apiDbContext)
+            IUnitOfWork unitOfWork) : base(unitOfWork)
         {
             _userManager = userManager;
             _jwtConfig = optionsMonitor.CurrentValue;
             _tokenValidationParams = TokenValidationParams;
-            _apiDbContext = apiDbContext;
         }
 
         //Registration
@@ -162,7 +161,7 @@ namespace API.Controllers.v1
 
         }
 
-        private async Task<AuthResult> GenerateJwtToken(IdentityUser user)
+        private async Task<TokenData> GenerateJwtToken(IdentityUser user)
         {
             var jwtTokenHandler = new JwtSecurityTokenHandler();
 
@@ -186,7 +185,7 @@ namespace API.Controllers.v1
             var token = jwtTokenHandler.CreateToken(tokenDescriptor);
             var jwtToken = jwtTokenHandler.WriteToken(token);
 
-            var refreshToken = new RefreshToken()
+            var refreshToken = new RefreshToken
             {
                 JwtId = token.Id,
                 Used = false,
@@ -197,13 +196,12 @@ namespace API.Controllers.v1
                 Token = RandomString(35) + Guid.NewGuid()
             };
 
-            await _apiDbContext.RefreshTokens.AddAsync(refreshToken);
-            await _apiDbContext.SaveChangesAsync();
+            await _unitOfWork.RefreshTokenRepo.AddAsync(refreshToken);
+            await _unitOfWork.CompleteAsync();
 
-            return new AuthResult()
+            return new TokenData()
             {
                 Token = jwtToken,
-                Success = true,
                 RefreshToken = refreshToken.Token
             };
         }
@@ -223,9 +221,7 @@ namespace API.Controllers.v1
                     var result = jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase);
 
                     if (result == false)
-                    {
                         return null;
-                    }
                 }
 
                 // Validation 3 - validate expiry date
@@ -245,7 +241,7 @@ namespace API.Controllers.v1
                 }
 
                 // validation 4 - validate existence of the token
-                var storedToken = await _apiDbContext.RefreshTokens.FirstOrDefaultAsync(x => x.Token == tokenRequest.RefreshToken);
+                var storedToken = await _unitOfWork.RefreshTokenRepo.GetByRefreshTokenAsync(tokenRequest.RefreshToken);
 
                 if (storedToken == null)
                 {
@@ -253,7 +249,7 @@ namespace API.Controllers.v1
                     {
                         Success = false,
                         Errors = new List<string>() {
-                            "Token does not exist"
+                            "Token is invalid"
                         }
                     };
                 }
@@ -283,7 +279,7 @@ namespace API.Controllers.v1
                 }
 
                 // Validation 7 - validate the id
-                var jti = tokenInVerification.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Jti).Value;
+                var jti = tokenInVerification.Claims.SingleOrDefault(x => x.Type == JwtRegisteredClaimNames.Jti).Value;
 
                 if (storedToken.JwtId != jti)
                 {
@@ -297,14 +293,44 @@ namespace API.Controllers.v1
                 }
 
                 // update current token 
-
                 storedToken.Used = true;
-                _apiDbContext.RefreshTokens.Update(storedToken);
-                await _apiDbContext.SaveChangesAsync();
+                var updated = await _unitOfWork.RefreshTokenRepo.UpdateAsync(storedToken);
+                await _unitOfWork.CompleteAsync();
 
                 // Generate a new token
+                if (!updated)
+                {
+                    return new AuthResult()
+                    {
+                        Success = false,
+                        Errors = new List<string>() {
+                            "An error occurred"
+                        }
+                    };
+                }                
+
                 var dbUser = await _userManager.FindByIdAsync(storedToken.UserId);
-                return await GenerateJwtToken(dbUser);
+
+                if(dbUser == null)
+                {
+                    return new AuthResult()
+                    {
+                        Success = false,
+                        Errors = new List<string>() {
+                            "No matching user found"
+                        }
+                    };
+                }
+
+                // Success result
+                var tokens = await GenerateJwtToken(dbUser);
+                return new AuthResult
+                {
+                    Success = true,
+                    Token = tokens.Token,
+                    RefreshToken = tokens.RefreshToken
+                };
+
             }
             catch (Exception ex)
             {

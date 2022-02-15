@@ -22,6 +22,7 @@ namespace API.DataServer.Data
         }
 
         public IUsersRepository UserRepo => new UsersRepository(_context, _logger);
+        public IRefreshTokenRepository RefreshTokenRepo => new RefreshTokenRepository(_context, _logger);
 
         public async Task CompleteAsync()
         {

@@ -10,6 +10,7 @@ namespace API.DataServer.IConfiguration
     public interface IUnitOfWork
     {
         IUsersRepository UserRepo { get; }
+        IRefreshTokenRepository RefreshTokenRepo { get; }
 
         Task CompleteAsync();
     }

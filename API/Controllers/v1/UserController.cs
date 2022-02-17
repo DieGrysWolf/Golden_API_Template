@@ -1,12 +1,14 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using API.Configuration.Messages;
+using API.Entities.Models.DTOs.Generic;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers.v1
 {
-    public class UsersController : BaseController
+    public class UserController : BaseController
     {
-        public UsersController(
+        public UserController(
             IUnitOfWork unitOfWork,
             UserManager<IdentityUser> userManager)
             : base(unitOfWork, userManager)
@@ -18,10 +20,22 @@ namespace API.Controllers.v1
         {
             var users = await _unitOfWork.UserRepo.GetAllAsync();
 
-            if(users == null)
-                return NotFound();
+            if (users == null)
+            {
+                var error = new ResultDTO<UserModel>()
+                {
+                    Error = PopulateError(404, ErrorMessages.NotFound.ProfileNotFound, ErrorMessages.Types.NotFound)
+                };
+                return NotFound(error);
+            }
 
-            return Ok(users);
+            var result = new PagedResultDTO<UserModel>()
+            {
+                Content = users.ToList(),
+                ResultCount = users.Count()
+            };
+
+            return Ok(result);
         }
 
         [HttpGet]
@@ -30,14 +44,26 @@ namespace API.Controllers.v1
         {
             var user = await _unitOfWork.UserRepo.GetByIdAsync(id);
 
-            if(user == null)
-                return NotFound();
+            if (user == null)
+            {
+                var error = new ResultDTO<UserModel>()
+                {
+                    Error = PopulateError(404, ErrorMessages.NotFound.ProfileNotFound, ErrorMessages.Types.NotFound)
+                };
+                return NotFound(error);
+            }
 
-            return Ok(user);
+            var result = new ResultDTO<UserModel>()
+            {
+                Content = user
+            };
+
+            return Ok(result);
         }
 
-        [HttpPut("UpdateById")]
-        public async Task<IActionResult> UpdateById([FromBody]UserModel user)
+        [HttpPut]
+        [Route("Update")]
+        public async Task<IActionResult> Update([FromBody]UserModel user)
         {
             var _user = new UserModel
             {
@@ -70,6 +96,7 @@ namespace API.Controllers.v1
         }
 
         [HttpDelete]
+        [Route("DeleteById")]
         public async Task<IActionResult> DeleteById([FromQuery] Guid id)
         {
             await _unitOfWork.UserRepo.DeleteAsync(id);

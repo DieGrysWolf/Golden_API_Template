@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace API.Entities.Models.DTOs.Generic
 {
-    public class TokenData
+    public class TokenDataDTO
     {
         public string? Token { get; set; }
         public string? RefreshToken { get; set; }

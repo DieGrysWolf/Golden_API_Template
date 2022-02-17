@@ -21,12 +21,12 @@ namespace API.Controllers.v1
     [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
     [ApiVersion("1.0")]
-    public class AuthController : BaseController
+    public class AccountController : BaseController
     {
         private readonly JwtConfig _jwtConfig;
         private readonly TokenValidationParameters _tokenValidationParams;
 
-        public AuthController(
+        public AccountController(
             UserManager<IdentityUser> userManager,
             IOptionsMonitor<JwtConfig> optionsMonitor,
             TokenValidationParameters TokenValidationParams,
@@ -203,7 +203,7 @@ namespace API.Controllers.v1
             return BadRequest("Account not removed");
         }
 
-        private async Task<TokenData> GenerateJwtToken(IdentityUser user)
+        private async Task<TokenDataDTO> GenerateJwtToken(IdentityUser user)
         {
             var jwtTokenHandler = new JwtSecurityTokenHandler();
 
@@ -241,7 +241,7 @@ namespace API.Controllers.v1
             await _unitOfWork.RefreshTokenRepo.AddAsync(refreshToken);
             await _unitOfWork.CompleteAsync();
 
-            return new TokenData()
+            return new TokenDataDTO()
             {
                 Token = jwtToken,
                 RefreshToken = refreshToken.Token

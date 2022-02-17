@@ -1,4 +1,7 @@
-﻿using API.Entities.Models.DTOs.Requests.Profile;
+﻿using API.Configuration.Messages;
+using API.Entities.Models.DTOs.Errors;
+using API.Entities.Models.DTOs.Generic;
+using API.Entities.Models.DTOs.Requests.Profile;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -6,7 +9,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers.v1
 {
-    [Authorize]
     public class ProfileController : BaseController
     {
         public ProfileController(
@@ -21,19 +23,39 @@ namespace API.Controllers.v1
         [Route("GetProfile")]
         public async Task<IActionResult> GetProfile()
         {
+            var result = new ResultDTO<UserModel>();
+
             var loggedInUser = await _userManager.GetUserAsync(HttpContext.User);
 
-            if(loggedInUser == null)
-                return NotFound("User not found");
+            if (loggedInUser == null)
+            {
+                result = new ResultDTO<UserModel>()
+                {
+                    Error = PopulateError(404, ErrorMessages.NotFound.AccountNotFound, ErrorMessages.Types.NotFound)
+                };
+                return NotFound(result);
+            }
 
             var identityId = new Guid(loggedInUser.Id);
 
             var profile = await _unitOfWork.UserRepo.GetByIdentityIdAsync(identityId);
 
-            if (profile == null)
-                return NotFound("Profile not found");
+            profile.IdentityId = identityId;
 
-            return Ok(profile);
+            if (profile == null)
+            {
+                result = new ResultDTO<UserModel>()
+                {
+                    Error = PopulateError(404, ErrorMessages.NotFound.ProfileNotFound, ErrorMessages.Types.NotFound)
+                };
+                return NotFound(result);
+            }
+
+            result = new ResultDTO<UserModel>()
+            {
+                Content = profile
+            };
+            return Ok(result);
         }
 
         // Update user profile
@@ -41,19 +63,39 @@ namespace API.Controllers.v1
         [Route("UpdateProfile")]
         public async Task<IActionResult> UpdateProfile([FromBody]UpdateProfileRequestDTO profile)
         {
-            if(!ModelState.IsValid)
-                return BadRequest("Invalid Payload");
+            var result = new ResultDTO<UserModel>();
+
+            if (!ModelState.IsValid)
+            {
+                result = new ResultDTO<UserModel>()
+                {
+                    Error = PopulateError(400, ErrorMessages.Generic.InvalidBody, ErrorMessages.Types.BadRequest)
+                };
+                return BadRequest(result);
+            }
 
             var loggedInUser = await _userManager.GetUserAsync(HttpContext.User);
 
             if (loggedInUser == null)
-                return NotFound("User not found");
+            {
+                result = new ResultDTO<UserModel>()
+                {
+                    Error = PopulateError(404, ErrorMessages.NotFound.AccountNotFound, ErrorMessages.Types.NotFound)
+                };
+                return NotFound(result);
+            }
 
             var identityId = new Guid(loggedInUser.Id);
             var userProfile = await _unitOfWork.UserRepo.GetByIdentityIdAsync(identityId);
 
             if (userProfile == null)
-                return NotFound("Profile not found");
+            {
+                result = new ResultDTO<UserModel>()
+                {
+                    Error = PopulateError(404, ErrorMessages.NotFound.ProfileNotFound, ErrorMessages.Types.NotFound)
+                };
+                return NotFound(result);
+            }
 
             userProfile.FirstName = profile.FirstName;
             userProfile.LastName = profile.LastName;
@@ -65,11 +107,20 @@ namespace API.Controllers.v1
 
             if (!updated)
             {
-                return BadRequest("Something went wrong");
+                result = new ResultDTO<UserModel>()
+                {
+                    Error = PopulateError(503, ErrorMessages.Generic.RequestFailed, ErrorMessages.Types.BadRequest)
+                };
+                return BadRequest(result);
             }
                 
             await _unitOfWork.CompleteAsync();
-            return Ok(userProfile);
+
+            result = new ResultDTO<UserModel>()
+            {
+                Content = userProfile
+            };
+            return Ok(result);
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using API.Entities.Models.DTOs.Errors;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,6 +19,16 @@ namespace API.Controllers.v1
         {
             _unitOfWork = unitOfWork;
             _userManager = userManager;
+        }
+
+        internal ErrorDTO PopulateError(int code, string message, string type)
+        {
+            return new ErrorDTO
+            {
+                Code = code,
+                Message = message,
+                Type = type
+            };
         }
     }
 }

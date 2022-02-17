@@ -10,8 +10,6 @@ namespace API.Entities.Models.DTOs.Requests
     public class UserRegistrationRequestDTO
     {
         [Required]
-        public string? Username { get; set; }
-        [Required]
         [EmailAddress]
         public string? Email { get; set; }
         [Required]

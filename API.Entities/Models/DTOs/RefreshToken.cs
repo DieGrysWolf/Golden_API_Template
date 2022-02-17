@@ -19,8 +19,5 @@ namespace API.Entities.Models.DTOs
         public bool Revoked { get; set; }
         public DateTime CreationDate { get; set; }
         public DateTime ExpiryDate { get; set; }
-
-        [ForeignKey(nameof(UserId))]
-        public IdentityUser? User { get; set; }
     }
 }

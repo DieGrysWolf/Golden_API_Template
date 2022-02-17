@@ -4,6 +4,7 @@ using API.Entities.Models.DTOs;
 using API.Entities.Models.DTOs.Generic;
 using API.Entities.Models.DTOs.Requests;
 using API.Entities.Models.DTOs.Responses;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -56,13 +57,26 @@ namespace API.Controllers.v1
                 var newUser = new IdentityUser()
                 {
                     Email = user.Email,
-                    UserName = user.Username
+                    UserName = user.Email
+                };
+
+                var userInfo = new UserModel
+                {
+                    EmailAddress = user.Email,
+                    Alive = true,
+                    DateJoined = DateTime.UtcNow,
+                    DateUpdated = DateTime.UtcNow,
+                    IdentityId = new Guid(newUser.Id)                    
                 };
 
                 var isCreated = await _userManager.CreateAsync(newUser, user.Password);
 
                 if (isCreated.Succeeded)
                 {
+                    // Create entry in UserData also
+                    await _unitOfWork.UserRepo.AddAsync(userInfo);
+                    await _unitOfWork.CompleteAsync();
+
                     var jwtToken = await GenerateJwtToken(newUser);
 
                     return Ok(jwtToken);
@@ -157,7 +171,36 @@ namespace API.Controllers.v1
                         { "Invalid Payload" },
                 Success = false
             });
+        }
 
+        [HttpDelete]
+        [Route("Delete")]
+        [Authorize]
+        public async Task<IActionResult> DeleteAccount()
+        {
+            IdentityUser user = await _userManager.GetUserAsync(HttpContext.User);
+
+            if(user == null)
+                return NotFound();
+
+            //start of profile stuff
+            var userProfile = await _unitOfWork.UserRepo.GetByIdentityIdAsync(new Guid(user.Id));
+            
+            if(userProfile == null)
+                return BadRequest("No profile found");
+
+            userProfile.Alive = false;
+
+            await _unitOfWork.UserRepo.UpdateAsync(userProfile);
+            await _unitOfWork.CompleteAsync();
+            //end of profile stuff
+
+            var result = await _userManager.DeleteAsync(user);
+
+            if (result.Succeeded)
+                return Ok();
+
+            return BadRequest("Account not removed");
         }
 
         private async Task<TokenData> GenerateJwtToken(IdentityUser user)

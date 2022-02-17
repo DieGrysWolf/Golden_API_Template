@@ -41,14 +41,25 @@ namespace API.DataServer.Repository
         }
 
         // This will be unique to every repository
-        public Task<bool> UpdateAsync(T entity)
-        {
-            throw new NotImplementedException();
+        public virtual async Task<bool> UpdateAsync(T entity)
+        {            
+            var result = dbSet.Update(entity);
+
+            if(result.State != EntityState.Modified)
+                return false;
+
+            return true;
         }
 
-        public Task<bool> DeleteAsync(Guid id)
+        public virtual async Task<bool> DeleteAsync(Guid id)
         {
-            throw new NotImplementedException();
+            var entity = await dbSet.FindAsync(id);
+
+            if (entity == null)
+                return false;
+
+            dbSet.Remove(entity);
+            return true;
         }
     }
 }

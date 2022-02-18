@@ -1,5 +1,6 @@
 ﻿using API.Configuration.Messages;
 using API.Entities.Models.DTOs.Generic;
+using API.Entities.Models.DTOs.Requests;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -9,9 +10,10 @@ namespace API.Controllers.v1
     public class UserController : BaseController
     {
         public UserController(
+            IMapper mapper,
             IUnitOfWork unitOfWork,
             UserManager<IdentityUser> userManager)
-            : base(unitOfWork, userManager)
+            : base(mapper, unitOfWork, userManager)
         {
         }
 
@@ -22,14 +24,14 @@ namespace API.Controllers.v1
 
             if (users == null)
             {
-                var error = new ResultDTO<UserModel>()
+                var error = new ResultDTO<UserInfoModel>()
                 {
                     Error = PopulateError(404, ErrorMessages.NotFound.ProfileNotFound, ErrorMessages.Types.NotFound)
                 };
                 return NotFound(error);
             }
 
-            var result = new PagedResultDTO<UserModel>()
+            var result = new PagedResultDTO<UserInfoModel>()
             {
                 Content = users.ToList(),
                 ResultCount = users.Count()
@@ -46,14 +48,14 @@ namespace API.Controllers.v1
 
             if (user == null)
             {
-                var error = new ResultDTO<UserModel>()
+                var error = new ResultDTO<UserInfoModel>()
                 {
                     Error = PopulateError(404, ErrorMessages.NotFound.ProfileNotFound, ErrorMessages.Types.NotFound)
                 };
                 return NotFound(error);
             }
 
-            var result = new ResultDTO<UserModel>()
+            var result = new ResultDTO<UserInfoModel>()
             {
                 Content = user
             };
@@ -63,36 +65,43 @@ namespace API.Controllers.v1
 
         [HttpPut]
         [Route("Update")]
-        public async Task<IActionResult> Update([FromBody]UserModel user)
+        public async Task<IActionResult> Update([FromBody]UserInfoRequestDTO user)
         {
-            var _user = new UserModel
+            var _mappedUser = _mapper.Map<UserInfoModel>(user);
+
+            /* var _user = new UserInfoModel
             {
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 EmailAddress = user.EmailAddress,
+                PhoneNumber = user.PhoneNumber,
                 Address = user.Address,
-                Alive = user.Alive,
-                DateJoined = user.DateJoined,
-                DateOfBirth = user.DateOfBirth,
-                DateUpdated = user.DateUpdated,
-                Id = user.Id,
-                PhoneNumber = user.PhoneNumber
-            };
+                DateOfBirth = user.DateOfBirth
+            }; */
 
-            await _unitOfWork.UserRepo.UpdateAsync(_user);
+            await _unitOfWork.UserRepo.UpdateAsync(_mappedUser);
             await _unitOfWork.CompleteAsync();
 
             // Comply with REST API
-            return CreatedAtRoute("GetById", new { id = _user.Id }, user);
+            return CreatedAtRoute("GetById", new { id = _mappedUser.Id }, user);
         }
 
+        // ToDo - make an update status only endpoint
+
         [HttpPost]
-        public async Task<IActionResult> CreateNewUser([FromBody]UserModel user)
+        public async Task<IActionResult> CreateNewUser([FromBody]UserInfoRequestDTO user)
         {
-            await _unitOfWork.UserRepo.AddAsync(user);
+            var mappedUser = _mapper.Map<UserInfoModel>(user);
+
+            await _unitOfWork.UserRepo.AddAsync(mappedUser);
             await _unitOfWork.CompleteAsync();
 
-            return CreatedAtRoute("GetById", user.Id, user);
+            var result = new ResultDTO<UserInfoRequestDTO>
+            {
+                Content = user
+            };
+
+            return CreatedAtRoute("GetById", new { id = mappedUser.Id }, result);
         }
 
         [HttpDelete]

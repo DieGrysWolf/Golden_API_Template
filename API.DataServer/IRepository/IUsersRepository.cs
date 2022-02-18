@@ -7,10 +7,10 @@ using System.Threading.Tasks;
 
 namespace API.DataServer.IRepository
 {
-    public interface IUsersRepository : IGenericRepository<UserModel>
+    public interface IUsersRepository : IGenericRepository<UserInfoModel>
     {
-        Task<UserModel> GetUserByEmail(string email);
-        Task<UserModel> GetByIdentityIdAsync(Guid identityId);
-        Task<bool> UpdateUserProfileAsync(UserModel user);
+        Task<UserInfoModel> GetUserByEmail(string email);
+        Task<UserInfoModel> GetByIdentityIdAsync(Guid identityId);
+        Task<bool> UpdateUserProfileAsync(UserInfoModel user);
     }
 }

@@ -12,9 +12,10 @@ namespace API.Controllers.v1
     public class ProfileController : BaseController
     {
         public ProfileController(
+            IMapper mapper,
             IUnitOfWork unitOfWork,
             UserManager<IdentityUser> userManager) 
-            : base(unitOfWork, userManager)
+            : base(mapper, unitOfWork, userManager)
         {
 
         }
@@ -23,13 +24,13 @@ namespace API.Controllers.v1
         [Route("GetProfile")]
         public async Task<IActionResult> GetProfile()
         {
-            var result = new ResultDTO<UserModel>();
+            var result = new ResultDTO<UserInfoModel>();
 
             var loggedInUser = await _userManager.GetUserAsync(HttpContext.User);
 
             if (loggedInUser == null)
             {
-                result = new ResultDTO<UserModel>()
+                result = new ResultDTO<UserInfoModel>()
                 {
                     Error = PopulateError(404, ErrorMessages.NotFound.AccountNotFound, ErrorMessages.Types.NotFound)
                 };
@@ -44,14 +45,14 @@ namespace API.Controllers.v1
 
             if (profile == null)
             {
-                result = new ResultDTO<UserModel>()
+                result = new ResultDTO<UserInfoModel>()
                 {
                     Error = PopulateError(404, ErrorMessages.NotFound.ProfileNotFound, ErrorMessages.Types.NotFound)
                 };
                 return NotFound(result);
             }
 
-            result = new ResultDTO<UserModel>()
+            result = new ResultDTO<UserInfoModel>()
             {
                 Content = profile
             };
@@ -63,11 +64,11 @@ namespace API.Controllers.v1
         [Route("UpdateProfile")]
         public async Task<IActionResult> UpdateProfile([FromBody]UpdateProfileRequestDTO profile)
         {
-            var result = new ResultDTO<UserModel>();
+            var result = new ResultDTO<UserInfoModel>();
 
             if (!ModelState.IsValid)
             {
-                result = new ResultDTO<UserModel>()
+                result = new ResultDTO<UserInfoModel>()
                 {
                     Error = PopulateError(400, ErrorMessages.Generic.InvalidBody, ErrorMessages.Types.BadRequest)
                 };
@@ -78,7 +79,7 @@ namespace API.Controllers.v1
 
             if (loggedInUser == null)
             {
-                result = new ResultDTO<UserModel>()
+                result = new ResultDTO<UserInfoModel>()
                 {
                     Error = PopulateError(404, ErrorMessages.NotFound.AccountNotFound, ErrorMessages.Types.NotFound)
                 };
@@ -90,7 +91,7 @@ namespace API.Controllers.v1
 
             if (userProfile == null)
             {
-                result = new ResultDTO<UserModel>()
+                result = new ResultDTO<UserInfoModel>()
                 {
                     Error = PopulateError(404, ErrorMessages.NotFound.ProfileNotFound, ErrorMessages.Types.NotFound)
                 };
@@ -107,7 +108,7 @@ namespace API.Controllers.v1
 
             if (!updated)
             {
-                result = new ResultDTO<UserModel>()
+                result = new ResultDTO<UserInfoModel>()
                 {
                     Error = PopulateError(503, ErrorMessages.Generic.RequestFailed, ErrorMessages.Types.BadRequest)
                 };
@@ -116,7 +117,7 @@ namespace API.Controllers.v1
                 
             await _unitOfWork.CompleteAsync();
 
-            result = new ResultDTO<UserModel>()
+            result = new ResultDTO<UserInfoModel>()
             {
                 Content = userProfile
             };

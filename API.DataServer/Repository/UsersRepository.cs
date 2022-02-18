@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace API.DataServer.Repository
 {
-    public class UsersRepository : GenericRepository<UserModel>, IUsersRepository 
+    public class UsersRepository : GenericRepository<UserInfoModel>, IUsersRepository 
     {
         IUnitOfWork unitOfWork;
 
@@ -20,7 +20,7 @@ namespace API.DataServer.Repository
 
         }
 
-        public override async Task<IEnumerable<UserModel>> GetAllAsync()
+        public override async Task<IEnumerable<UserInfoModel>> GetAllAsync()
         {
             try
             {
@@ -31,11 +31,11 @@ namespace API.DataServer.Repository
             catch (Exception ex)
             {
                 _logger.LogError(ex, "{Repo} GetAll has generated an error", typeof(UsersRepository));
-                return new List<UserModel>();
+                return new List<UserInfoModel>();
             }
         }
 
-        public async Task<UserModel> GetUserByEmail(string email)
+        public async Task<UserInfoModel> GetUserByEmail(string email)
         {
             try
             {
@@ -43,18 +43,18 @@ namespace API.DataServer.Repository
                     .FirstOrDefaultAsync();
 
                 if (user == null)
-                    return new UserModel();
+                    return new UserInfoModel();
 
                 return user;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "{Repo} GetuserByEmail has generated an error", typeof(UsersRepository));
-                return new UserModel();
+                return new UserInfoModel();
             }
         }
 
-        public async Task<UserModel> GetByIdentityIdAsync(Guid identityId)
+        public async Task<UserInfoModel> GetByIdentityIdAsync(Guid identityId)
         {
             try
             {
@@ -62,18 +62,18 @@ namespace API.DataServer.Repository
                     .FirstOrDefaultAsync();
 
                 if (result == null)
-                    return new UserModel();
+                    return new UserInfoModel();
 
                 return result;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "{Repo} GetByIdentityId method has generated an error", typeof(UsersRepository));
-                return new UserModel();
+                return new UserInfoModel();
             }
         }
 
-        public async Task<bool> UpdateUserProfileAsync(UserModel user)
+        public async Task<bool> UpdateUserProfileAsync(UserInfoModel user)
         {
             try
             {

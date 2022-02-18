@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace API.DataServer.IRepository
 {
-    public interface IProfileRepository : IGenericRepository<UserModel>
+    public interface IProfileRepository : IGenericRepository<UserInfoModel>
     {
     }
 }

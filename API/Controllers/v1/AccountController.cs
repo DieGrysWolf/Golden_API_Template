@@ -27,10 +27,11 @@ namespace API.Controllers.v1
         private readonly TokenValidationParameters _tokenValidationParams;
 
         public AccountController(
+            IMapper mapper,
             UserManager<IdentityUser> userManager,
             IOptionsMonitor<JwtConfig> optionsMonitor,
             TokenValidationParameters TokenValidationParams,
-            IUnitOfWork unitOfWork) : base(unitOfWork, userManager)
+            IUnitOfWork unitOfWork) : base(mapper, unitOfWork, userManager)
         {
             _userManager = userManager;
             _jwtConfig = optionsMonitor.CurrentValue;
@@ -60,7 +61,7 @@ namespace API.Controllers.v1
                     UserName = user.Email
                 };
 
-                var userInfo = new UserModel
+                var userInfo = new UserInfoModel
                 {
                     EmailAddress = user.Email,
                     Alive = true,

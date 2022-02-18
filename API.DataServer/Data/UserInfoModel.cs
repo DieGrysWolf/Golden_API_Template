@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace API.DataServer.Data
 {
-    public class UserModel
+    public class UserInfoModel
     {
         public Guid Id { get; set; } = Guid.NewGuid();
         public Guid IdentityId { get; set; }

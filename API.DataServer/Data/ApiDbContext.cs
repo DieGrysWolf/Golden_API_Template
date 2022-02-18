@@ -13,7 +13,7 @@ namespace API.DataServer
     public class ApiDbContext : IdentityDbContext
     {
         public virtual DbSet<RefreshToken>? RefreshTokens { get; set; }
-        public virtual DbSet<UserModel>? UsersInfo { get; set; }
+        public virtual DbSet<UserInfoModel>? UsersInfo { get; set; }
 
         public ApiDbContext(DbContextOptions<ApiDbContext> options)
             : base(options)

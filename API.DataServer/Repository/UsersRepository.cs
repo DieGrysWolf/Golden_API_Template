@@ -12,8 +12,6 @@ namespace API.DataServer.Repository
 {
     public class UsersRepository : GenericRepository<UserInfoModel>, IUsersRepository 
     {
-        IUnitOfWork unitOfWork;
-
         public UsersRepository(ApiDbContext context, ILogger logger)
             :base(context, logger)
         {
@@ -25,6 +23,21 @@ namespace API.DataServer.Repository
             try
             {
                 return await dbSet.Where(x => x.Alive == true)
+                    .AsNoTracking()
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "{Repo} GetAll has generated an error", typeof(UsersRepository));
+                return new List<UserInfoModel>();
+            }
+        }
+
+        public async Task<IEnumerable<UserInfoModel>> GetAllDeadAsync()
+        {
+            try
+            {
+                return await dbSet.Where(x => x.Alive == false)
                     .AsNoTracking()
                     .ToListAsync();
             }

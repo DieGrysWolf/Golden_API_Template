@@ -9,6 +9,7 @@ namespace API.DataServer.IRepository
 {
     public interface IUsersRepository : IGenericRepository<UserInfoModel>
     {
+        Task<IEnumerable<UserInfoModel>> GetAllDeadAsync();
         Task<UserInfoModel> GetUserByEmail(string email);
         Task<UserInfoModel> GetByIdentityIdAsync(Guid identityId);
         Task<bool> UpdateUserProfileAsync(UserInfoModel user);

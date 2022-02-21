@@ -16,11 +16,9 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 
-namespace API.Controllers.v1
+namespace API.Controllers.v1.UserManagement
 {
-    [Route("api/v{version:apiVersion}/[controller]")]
-    [ApiController]
-    [ApiVersion("1.0")]
+    [Authorize]
     public class AccountController : BaseController
     {
         private readonly JwtConfig _jwtConfig;
@@ -41,6 +39,7 @@ namespace API.Controllers.v1
         //Registration
         [HttpPost]
         [Route("Register")]
+        [AllowAnonymous]
         public async Task<IActionResult> Register([FromBody] UserRegistrationRequestDTO user)
         {
             if (ModelState.IsValid)
@@ -103,6 +102,7 @@ namespace API.Controllers.v1
         //Login
         [HttpPost]
         [Route("Login")]
+        [AllowAnonymous]
         public async Task<IActionResult> Login([FromBody] UserLoginRequestDTO user)
         {
             if (ModelState.IsValid)
@@ -176,7 +176,6 @@ namespace API.Controllers.v1
 
         [HttpDelete]
         [Route("Delete")]
-        [Authorize]
         public async Task<IActionResult> DeleteAccount()
         {
             IdentityUser user = await _userManager.GetUserAsync(HttpContext.User);
